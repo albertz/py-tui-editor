@@ -16,6 +16,8 @@ etc.
 It takes extra care to handle terminal resizing.
 It also supports to show a status bar (potential multi-line).
 
+Homepage: https://github.com/albertz/py-tui-editor
+
 
 Installation
 ************
