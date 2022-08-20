@@ -47,7 +47,7 @@ Usage
 Screenshot
 **********
 
-.. image:: https://raw.githubusercontent.com/albertz/py-tui-editor/main/screenshots/2022-08-21.png?sanitize=true
+.. image:: https://raw.githubusercontent.com/albertz/py-tui-editor/master/screenshots/2022-08-21.png?sanitize=true
 
 
 Motivation
