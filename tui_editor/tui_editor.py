@@ -67,19 +67,19 @@ class TuiEditor:
     self.status_content = [""]
 
   @staticmethod
-  def wr(s: bytes):
+  def write(s: bytes):
     assert isinstance(s, bytes)
     os.write(1, s)
 
   @staticmethod
   def cls():
-    TuiEditor.wr(b"\x1b[2J")
+    TuiEditor.write(b"\x1b[2J")
 
   def goto(self, row, col):
-    TuiEditor.wr(b"\x1b[%d;%dH" % (row + 1 + self.screen_top, col + 1))
+    TuiEditor.write(b"\x1b[%d;%dH" % (row + 1 + self.screen_top, col + 1))
 
   def get_cursor_pos(self):
-    self.wr(b"\x1b[6n")
+    self.write(b"\x1b[6n")
     s = b""
     while True:
       s += os.read(0, 1)
@@ -93,14 +93,14 @@ class TuiEditor:
 
   @staticmethod
   def clear_to_eol():
-    TuiEditor.wr(b"\x1b[0K")
+    TuiEditor.write(b"\x1b[0K")
 
   @staticmethod
-  def cursor(onoff):
-    if onoff:
-      TuiEditor.wr(b"\x1b[?25h")
+  def cursor(enabled: bool):
+    if enabled:
+      TuiEditor.write(b"\x1b[?25h")
     else:
-      TuiEditor.wr(b"\x1b[?25l")
+      TuiEditor.write(b"\x1b[?25l")
 
   def set_cursor(self):
     self.goto(self.row, self.col)
@@ -123,10 +123,10 @@ class TuiEditor:
     # assume we have already drawn the screen before
     if len(lines) < len(self.status_content):
       self.goto(self.max_visible_height, 0)
-      self.wr(b"\x1b[%iM" % (len(self.status_content) - len(lines)))
+      self.write(b"\x1b[%iM" % (len(self.status_content) - len(lines)))
     elif len(lines) > len(self.status_content):
       self.goto(self.max_visible_height, 0)
-      self.wr(b"\n" * (len(lines) - 1))
+      self.write(b"\n" * (len(lines) - 1))
       self.update_editor_row_offset(self.max_visible_height + len(lines) - 1)
     self.status_content = lines
     self.update_screen_status()
@@ -134,7 +134,7 @@ class TuiEditor:
   def update_screen(self):
     self.cursor(False)
     self.goto(0, 0)
-    self.wr(self.content_prefix_escape)
+    self.write(self.content_prefix_escape)
     if self.screen_top == 0:
       self.cls()
     i = self.top_line
@@ -142,7 +142,7 @@ class TuiEditor:
       self.show_line(self.content[i])
       if self.screen_top > 0:
         self.clear_to_eol()
-      self.wr(b"\r\n")
+      self.write(b"\r\n")
       i += 1
       if i == self.total_lines:
         break
@@ -158,16 +158,16 @@ class TuiEditor:
     if goto:
       self.cursor(False)
       self.goto(self.max_visible_height, 0)
-    self.wr(b"\x1b[30;102m")
+    self.write(b"\x1b[30;102m")
     assert self.status_content
     for c, line in enumerate(self.status_content):
       if c > 0:
-        self.wr(b"\n")
+        self.write(b"\n")
       self.show_line(line)
       if self.screen_top > 0:
         self.clear_to_eol()
-      self.wr(b"\r")
-    self.wr(b"\x1b[0m")
+      self.write(b"\r")
+    self.write(b"\x1b[0m")
     if goto:
       self.set_cursor()
       self.cursor(True)
@@ -181,15 +181,15 @@ class TuiEditor:
 
   def update_line(self):
     self.cursor(False)
-    self.wr(b"\r")
-    self.wr(self.content_prefix_escape)
+    self.write(b"\r")
+    self.write(self.content_prefix_escape)
     self.show_line(self.content[self.cur_line])
     self.clear_to_eol()
     self.set_cursor()
     self.cursor(True)
 
   def show_line(self, line: str):
-    self.wr(line.encode("utf8"))
+    self.write(line.encode("utf8"))
 
   def next_line(self):
     if self.row + 1 == self.height:
@@ -302,7 +302,7 @@ class TuiEditor:
       if len(self.content) < self.height:
         self.cursor(False)
         self.goto(self.max_visible_height + len(self.status_content) - 1, 0)
-        self.wr(b"\r\n")  # make space for new line at end
+        self.write(b"\r\n")  # make space for new line at end
         self.update_editor_row_offset(self.max_visible_height + len(self.status_content))
       self.content[self.cur_line] = l[:self.col]
       self.cur_line += 1
@@ -326,7 +326,7 @@ class TuiEditor:
         elif self.row > 0:
           self.row -= 1
         if len(self.content) < self.height:
-          self.wr(b"\x1b[1M")  # delete one line
+          self.write(b"\x1b[1M")  # delete one line
         self.update_screen()
     elif key == KEY_DELETE:
       l = l[:self.col] + l[self.col + 1:]
@@ -342,7 +342,7 @@ class TuiEditor:
   def init_tty(self):
     self._orig_termios = termios.tcgetattr(0)
     tty.setraw(0)
-    self.wr(b"\x1b[?7l")  # No Auto-Wrap Mode (DECAWM)
+    self.write(b"\x1b[?7l")  # No Auto-Wrap Mode (DECAWM)
 
     self._make_enough_space()
 
@@ -364,14 +364,14 @@ class TuiEditor:
     self.update_editor_row_offset(cur_row=num_lines)
 
   def deinit_tty(self, clear_editor=True):
-    self.wr(b"\x1b[0m")
+    self.write(b"\x1b[0m")
     if clear_editor:
       self.goto(0, 0)
-      self.wr(b"\x1b[%iM" % (self.max_visible_height + len(self.status_content)))
+      self.write(b"\x1b[%iM" % (self.max_visible_height + len(self.status_content)))
     else:
       # Don't leave cursor in the middle of screen
       self.goto(self.max_visible_height + len(self.status_content) - 1, 0)
-      self.wr(b"\r\n")
+      self.write(b"\r\n")
     termios.tcsetattr(0, termios.TCSANOW, self._orig_termios)
     signal.signal(signal.SIGWINCH, self._orig_sig_win_ch)
 
