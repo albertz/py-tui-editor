@@ -62,7 +62,7 @@ class TuiEditor:
     def cur_line(self):
         return self.top_line + self.row
 
-    def set_status_content(self, lines: list[str]):
+    def set_status_lines(self, lines: list[str]):
         assert self._status_content
         lines = lines or [""]
         # assume we have already drawn the screen before
