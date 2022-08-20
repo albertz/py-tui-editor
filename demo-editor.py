@@ -11,15 +11,12 @@ from tui_editor import Editor
 def main():
     """main"""
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("file", help="File content to edit (nothing will be written)", nargs="?")
+    arg_parser.add_argument("file", help="File content to edit (nothing will be written)", default=__file__, nargs="?")
     arg_parser.add_argument("--height", type=int, default=20)
     args = arg_parser.parse_args()
 
-    if args.file:
-        with open(args.file) as f:
-            content = f.read().splitlines()
-    else:
-        content = arg_parser.format_help().splitlines()
+    with open(args.file) as f:
+        content = f.read().splitlines()
 
     print("Hello editor!")
 
