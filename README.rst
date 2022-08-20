@@ -44,6 +44,12 @@ Usage
     'Hello World!'
 
 
+Screenshot
+**********
+
+.. image:: https://raw.githubusercontent.com/albertz/py-tui-editor/main/screenshots/2022-08-21.png?sanitize=true
+
+
 Motivation
 **********
 
