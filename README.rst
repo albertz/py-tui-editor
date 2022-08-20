@@ -35,10 +35,23 @@ Thus you can just do:
 Usage
 *****
 
+Simple empty editor:
+
 .. code-block:: python
 
     >>> from tui_editor import TuiEditor
     >>> editor = TuiEditor()
+    >>> editor.edit()
+    >>> editor.get_text()
+    'Hello World!'
+
+Predefined editable text:
+
+.. code-block:: python
+
+    >>> from tui_editor import TuiEditor
+    >>> editor = TuiEditor()
+    >>> editor.set_text('Hello World!')
     >>> editor.edit()
     >>> editor.get_text()
     'Hello World!'
