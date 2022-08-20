@@ -1,9 +1,49 @@
 Simple Python terminal (TUI) multi-line editor
-==============================================
+##############################################
 
+This is just a simple multi-line editor for the terminal
+(VT100).
+It is a bit like
+``input`` (`doc <https://docs.python.org/3/library/functions.html#input>`__)
+but supporting multiple lines
+and behaving more like a simple editor.
+It is different to other editors
+and other TUI frameworks in that it will not go full-screen
+but only use the last N lines of the terminal.
+It is intended to be flexible and hackable,
+i.e. the behavior can be changed, typing events can be handled,
+etc.
+It takes extra care to handle terminal resizing.
+It also supports to show a status bar (potential multi-line).
+
+
+Installation
+************
+
+The project is on PyPI:
 https://pypi.org/project/tui-editor/
 
-Simple TUI editor
+Thus you can just do:
+
+.. code-block:: bash
+
+    pip install tui-editor
+
+
+Usage
+*****
+
+.. code-block:: python
+
+    >>> from tui_editor import TuiEditor
+    >>> editor = TuiEditor()
+    >>> editor.edit()
+    >>> editor.get_text()
+    'Hello World!'
+
+
+Motivation
+**********
 
 Python TUI?
 
@@ -11,6 +51,25 @@ What I want:
 - simple multi-line editor
 - not whole screen but only partial
 - show interactive feedback. e.g. mark edits, show number of edits, show diff in separate plane or so
+
+
+Licence
+*******
+
+MIT License
+
+
+History
+*******
+
+2015 Paul Sokolovsky:
+`picotui project <https://pypi.org/project/picotui/>`__
+`seditor.py example <https://github.com/pfalcon/picotui/blob/master/seditor.py>`__.
+2022 Albert Zeyer: extend and redesign and package just the text editor as this library.
+
+
+Related projects
+****************
 
 https://docs.python.org/3/library/curses.html
 - too complex but at the same time too limited?
@@ -35,9 +94,9 @@ https://github.com/Textualize/textual (13k stars)
 
 https://github.com/pfalcon/picotui/blob/master/seditor.py
 
-Very simple VT100 terminal text editor widget
-Copyright (c) 2015 Paul Sokolovsky, (c) 2022 Albert Zeyer
-Distributed under MIT License
+
+References
+**********
 
 https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
 https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-The-Alternate-Screen-Buffer
