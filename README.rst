@@ -10,7 +10,7 @@ and behaving more like a simple editor.
 It is different to other editors
 and other TUI frameworks in that it will not go full-screen
 but only use the last N lines of the terminal.
-It is intended to be flexible and hackable,
+It is intended to be simple and flexible and hackable,
 i.e. the behavior can be changed, typing events can be handled,
 etc.
 It takes extra care to handle terminal resizing.
@@ -48,8 +48,9 @@ Motivation
 Python TUI?
 
 What I want:
+
 - simple multi-line editor
-- not whole screen but only partial
+- not whole screen but only next N lines
 - show interactive feedback. e.g. mark edits, show number of edits, show diff in separate plane or so
 
 
