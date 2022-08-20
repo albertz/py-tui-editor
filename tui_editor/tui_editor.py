@@ -68,7 +68,7 @@ class TuiEditor:
         # assume we have already drawn the screen before
         if len(lines) < len(self._status_content):
             self.tty.goto(self.max_visible_height, 0)
-            self.tty.write(b"\x1b[%iM" % (len(self._status_content) - len(lines)))
+            self.tty.write(b"\x1b[0m\x1b[%iM" % (len(self._status_content) - len(lines)))
         elif len(lines) > len(self._status_content):
             self.tty.goto(self.max_visible_height, 0)
             self.tty.write(b"\n" * (len(lines) - 1))
@@ -248,16 +248,16 @@ class TuiEditor:
                 l = l[:self.col] + l[self.col + 1:]
                 self._content[self.cur_line] = l
                 self.update_line()
-            elif self.cur_line > 0:
+            elif self.col == 0 and self.cur_line > 0:
+                self.col = len(self._content[self.cur_line - 1])
                 self._content[self.cur_line - 1] += self._content[self.cur_line]
                 self._content.pop(self.cur_line)
                 if self.top_line > 0 and self.top_line + self.height > len(self._content):
                     self.top_line -= 1
                 elif self.row > 0:
                     self.row -= 1
-                self.col = len(self._content[self.cur_line])
                 if len(self._content) < self.height:
-                    self.tty.write(b"\x1b[1M")  # delete one line
+                    self.tty.write(b"\x1b[0m\x1b[1M")  # delete one line
                 self.update_screen()
         elif key == KEY_DELETE:
             l = l[:self.col] + l[self.col + 1:]
