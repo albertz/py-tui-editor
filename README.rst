@@ -1,6 +1,7 @@
-# py-tui-editor
-
 Simple Python terminal (TUI) multi-line editor
+==============================================
+
+https://pypi.org/project/tui-editor/
 
 Simple TUI editor
 
