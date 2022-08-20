@@ -17,8 +17,8 @@ class TtyController:
     def __init__(self, *,
                  fd_in: int = 0,
                  fd_out: int = 1,
-                 total_height: Callable[[], int],
-                 update_screen: Callable[[], None],
+                 total_height: Callable[[], int],  # for reserving space
+                 update_screen: Callable[[], None],  # called on resize
                  ):
         self.fd_in = fd_in
         self.fd_out = fd_out
