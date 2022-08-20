@@ -44,6 +44,7 @@ jobs:
 
         pip install --user --upgrade pip setuptools wheel
         pip install --user pytest
+        pip install --user better_exchook
 
     - name: Run test
       run: |
