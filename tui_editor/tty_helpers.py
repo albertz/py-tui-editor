@@ -38,8 +38,7 @@ class TtyController:
         # make enough space
         # assuming nothing has been printed yet
         num_lines = self.total_height() - 1
-        for i in range(num_lines):
-            print()
+        self.write(b"\n" * num_lines)
         self.update_editor_row_offset(cur_row=num_lines)
 
         def _on_resize(_signum, _frame):
@@ -57,7 +56,7 @@ class TtyController:
         num_lines = self.total_height()
         if clear_editor:
             self.goto(0, 0)
-            self.write(b"\x1b[%iM" % (num_lines))
+            self.write(b"\x1b[%iM" % num_lines)
         else:
             # Don't leave cursor in the middle of screen
             self.goto(num_lines - 1, 0)
