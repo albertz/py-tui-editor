@@ -317,10 +317,10 @@ class Editor:
           if key == KEY_QUIT:
             return key
           if self.handle_cursor_keys(key):
-            self.on_cursor_change()
+            self.on_cursor_pos_change()
             continue
           self.handle_key(key)
-          self.on_cursor_change()
+          self.on_cursor_pos_change()
     finally:
       self.deinit_tty()
 
@@ -403,35 +403,10 @@ class Editor:
     termios.tcsetattr(0, termios.TCSANOW, self.org_termios)
     signal.signal(signal.SIGWINCH, self.org_sig_win_ch)
 
-  def on_cursor_change(self):
+  def on_cursor_pos_change(self):
     # Overwrite this function if you want.
     pass
 
   def on_edit(self):
     # Overwrite this function if you want.
     pass
-
-
-def main():
-  with open(sys.argv[1]) as f:
-    content = f.read().splitlines()
-
-  print("Hello editor!")
-
-  e = Editor()
-  e.set_lines(content)
-  e.height = 20
-
-  e.on_cursor_change = (
-    lambda: e.set_status_content([
-      "line: %d/%d" % (e.cur_line + 1, e.total_lines),
-      "col: %d" % e.col,
-    ]))
-
-  e.loop()
-
-  print("Good bye!")
-
-
-if __name__ == "__main__":
-  main()
