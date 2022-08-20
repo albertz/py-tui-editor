@@ -1,6 +1,5 @@
 """
 Simple TUI editor
-
 """
 
 # Original code:
@@ -51,7 +50,8 @@ KEYMAP = {
 }
 
 
-class Editor:
+class TuiEditor:
+  """TUI editor"""
 
   def __init__(self):
     self.screen_top = 0
@@ -60,8 +60,8 @@ class Editor:
     self.row = 0
     self.col = 0
     self.height = 10  # 25
-    self.org_termios = None
-    self.org_sig_win_ch = None
+    self._orig_termios = None
+    self._orig_sig_win_ch = None
     self.content_prefix_escape = b"\x1b[30;106m"
     self.content = []
     self.status_content = [""]
@@ -73,10 +73,10 @@ class Editor:
 
   @staticmethod
   def cls():
-    Editor.wr(b"\x1b[2J")
+    TuiEditor.wr(b"\x1b[2J")
 
   def goto(self, row, col):
-    Editor.wr(b"\x1b[%d;%dH" % (row + 1 + self.screen_top, col + 1))
+    TuiEditor.wr(b"\x1b[%d;%dH" % (row + 1 + self.screen_top, col + 1))
 
   def get_cursor_pos(self):
     self.wr(b"\x1b[6n")
@@ -93,14 +93,14 @@ class Editor:
 
   @staticmethod
   def clear_to_eol():
-    Editor.wr(b"\x1b[0K")
+    TuiEditor.wr(b"\x1b[0K")
 
   @staticmethod
   def cursor(onoff):
     if onoff:
-      Editor.wr(b"\x1b[?25h")
+      TuiEditor.wr(b"\x1b[?25h")
     else:
-      Editor.wr(b"\x1b[?25l")
+      TuiEditor.wr(b"\x1b[?25l")
 
   def set_cursor(self):
     self.goto(self.row, self.col)
@@ -340,7 +340,7 @@ class Editor:
     self.on_edit()
 
   def init_tty(self):
-    self.org_termios = termios.tcgetattr(0)
+    self._orig_termios = termios.tcgetattr(0)
     tty.setraw(0)
     self.wr(b"\x1b[?7l")  # No Auto-Wrap Mode (DECAWM)
 
@@ -353,7 +353,7 @@ class Editor:
       # Updating the screen might be a good idea anyway.
       self.update_screen()
 
-    self.org_sig_win_ch = signal.getsignal(signal.SIGWINCH)
+    self._orig_sig_win_ch = signal.getsignal(signal.SIGWINCH)
     signal.signal(signal.SIGWINCH, _on_resize)
 
   def _make_enough_space(self):
@@ -372,8 +372,8 @@ class Editor:
       # Don't leave cursor in the middle of screen
       self.goto(self.max_visible_height + len(self.status_content) - 1, 0)
       self.wr(b"\r\n")
-    termios.tcsetattr(0, termios.TCSANOW, self.org_termios)
-    signal.signal(signal.SIGWINCH, self.org_sig_win_ch)
+    termios.tcsetattr(0, termios.TCSANOW, self._orig_termios)
+    signal.signal(signal.SIGWINCH, self._orig_sig_win_ch)
 
   def on_cursor_pos_change(self):
     # Overwrite this function if you want.

@@ -5,7 +5,7 @@ Demo editor
 """
 
 import argparse
-from tui_editor import Editor
+from tui_editor import TuiEditor
 
 
 def main():
@@ -20,7 +20,7 @@ def main():
 
     print("Hello editor!")
 
-    e = Editor()
+    e = TuiEditor()
     e.set_lines(content)
     e.height = args.height
 
