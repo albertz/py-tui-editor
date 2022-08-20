@@ -30,7 +30,7 @@ def main():
             "col: %d" % e.col,
             ]))
 
-    e.loop()
+    e.edit()
 
     print("Good bye!")
 

@@ -56,7 +56,6 @@ class TuiEditor:
   def __init__(self):
     self.screen_top = 0
     self.top_line = 0
-    self.cur_line = 0
     self.row = 0
     self.col = 0
     self.height = 10  # 25
@@ -116,6 +115,10 @@ class TuiEditor:
   @property
   def total_lines(self):
     return len(self.content)
+
+  @property
+  def cur_line(self):
+    return self.top_line + self.row
 
   def set_status_content(self, lines: list[str]):
     assert self.status_content
@@ -194,34 +197,34 @@ class TuiEditor:
   def next_line(self):
     if self.row + 1 == self.height:
       self.top_line += 1
+      self.adjust_cursor_eol()
       return True
     else:
       self.row += 1
+      self.adjust_cursor_eol()
       return False
 
   def prev_line(self):
     if self.row == 0:
       if self.top_line > 0:
         self.top_line -= 1
+        self.adjust_cursor_eol()
         return True
       return False
     else:
       self.row -= 1
+      self.adjust_cursor_eol()
       return False
 
   def handle_cursor_keys(self, key):
     if key == KEY_DOWN:
       if self.cur_line + 1 != self.total_lines:
-        self.cur_line += 1
-        self.adjust_cursor_eol()
         if self.next_line():
           self.update_screen()
         else:
           self.set_cursor()
     elif key == KEY_UP:
       if self.cur_line > 0:
-        self.cur_line -= 1
-        self.adjust_cursor_eol()
         if self.prev_line():
           self.update_screen()
         else:
@@ -269,7 +272,7 @@ class TuiEditor:
       return False
     return True
 
-  def loop(self):
+  def edit(self):
     self.init_tty()
     try:
       self.update_screen()
@@ -305,26 +308,24 @@ class TuiEditor:
         self.write(b"\r\n")  # make space for new line at end
         self.update_editor_row_offset(self.max_visible_height + len(self.status_content))
       self.content[self.cur_line] = l[:self.col]
-      self.cur_line += 1
-      self.content.insert(self.cur_line, l[self.col:])
+      self.content.insert(self.cur_line + 1, l[self.col:])
       self.col = 0
       self.next_line()
       self.update_screen()
     elif key == KEY_BACKSPACE:
-      if self.col:
+      if self.col > 0:
         self.col -= 1
         l = l[:self.col] + l[self.col + 1:]
         self.content[self.cur_line] = l
         self.update_line()
-      elif self.cur_line:
-        self.cur_line -= 1
-        self.col = len(self.content[self.cur_line])
-        self.content[self.cur_line] += self.content[self.cur_line + 1]
-        self.content.pop(self.cur_line + 1)
+      elif self.cur_line > 0:
+        self.content[self.cur_line - 1] += self.content[self.cur_line]
+        self.content.pop(self.cur_line)
         if self.top_line > 0 and self.top_line + self.height > len(self.content):
           self.top_line -= 1
         elif self.row > 0:
           self.row -= 1
+        self.col = len(self.content[self.cur_line])
         if len(self.content) < self.height:
           self.write(b"\x1b[1M")  # delete one line
         self.update_screen()
