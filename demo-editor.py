@@ -16,12 +16,12 @@ def main():
     args = arg_parser.parse_args()
 
     with open(args.file) as f:
-        content = f.read().splitlines()
+        content = f.read().split('\n')
 
     print("Hello editor!")
 
     e = TuiEditor()
-    e.set_lines(content)
+    e.set_text_lines(content)
     e.height = args.height
 
     e.on_cursor_pos_change = (

@@ -62,7 +62,7 @@ class TuiEditor:
     self._orig_termios = None
     self._orig_sig_win_ch = None
     self.content_prefix_escape = b"\x1b[30;106m"
-    self._content = []
+    self._content = [""]
     self._status_content = [""]
 
   @staticmethod
@@ -109,8 +109,17 @@ class TuiEditor:
     if self.col > l:
       self.col = l
 
-  def set_lines(self, lines: list[str]):
-    self._content = lines
+  def set_text_lines(self, lines: list[str]):
+    self._content = lines or [""]
+
+  def set_text(self, text: str):
+    self._content = text.split("\n")
+
+  def get_text_lines(self):
+    return self._content
+
+  def get_text(self) -> str:
+    return "\n".join(self._content)
 
   @property
   def total_lines(self):
@@ -290,7 +299,7 @@ class TuiEditor:
           if key in KEYMAP:
             key = KEYMAP[key]
           if key == KEY_QUIT:
-            return key
+            return
           if self.handle_cursor_keys(key):
             self.on_cursor_pos_change()
             continue
