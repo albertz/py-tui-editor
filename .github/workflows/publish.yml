@@ -1,14 +1,19 @@
 name: Publish
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Tests"]
+    branches: [main]
+    types:
+      - completed
   workflow_dispatch:
 
 jobs:
   publish:
     if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push' &&
       github.repository == 'albertz/py-tui-editor'
     runs-on: ubuntu-latest
 
