@@ -1,0 +1,33 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  publish:
+    if: >-
+      github.repository == 'albertz/py-tui-editor'
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+
+    - name: Install Python deps
+      run: |
+        echo "PATH=$PATH:~/.local/bin" >> $GITHUB_ENV
+        pip3 install --user --upgrade pip setuptools wheel
+
+    - run: python3 setup.py sdist
+
+    # https://github.com/marketplace/actions/pypi-publish
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.pypi_password }}
