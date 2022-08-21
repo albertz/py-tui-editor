@@ -28,6 +28,7 @@ class TuiEditor:
         self.row = 0
         self.col = 0
         self.height = 10  # lines for editor only, excluding status bars
+        self.show_line_numbers = False
         self._orig_termios = None
         self._orig_sig_win_ch = None
         self.content_prefix_escape = b"\x1b[30;106m"
@@ -82,7 +83,10 @@ class TuiEditor:
 
     def set_cursor(self):
         """set the cursor back to the editor pos"""
-        self.tty.goto(self.row, self.col)
+        col_offset = 0
+        if self.show_line_numbers:
+            col_offset += len(str(self.total_lines)) + 2
+        self.tty.goto(self.row, self.col + col_offset)
 
     def adjust_cursor_eol(self):
         """when the cur line changed, potentially fix cursor pos col"""
@@ -134,6 +138,7 @@ class TuiEditor:
         self.tty.write(self.content_prefix_escape)
         i = self.top_line_idx
         for c in range(self.height):
+            self._show_line_number(self.top_line_idx + c)
             self._show_line(self._content[i])
             self.tty.write(b"\r\n")
             i += 1
@@ -177,9 +182,19 @@ class TuiEditor:
         self.tty.cursor(False)
         self.tty.write(b"\r")
         self.tty.write(self.content_prefix_escape)
+        self._show_line_number()
         self._show_line(self._content[self.cur_line_idx])
         self.set_cursor()
         self.tty.cursor(True)
+
+    def _show_line_number(self, line_idx: int = None):
+        if not self.show_line_numbers:
+            return
+        if line_idx is None:
+            line_idx = self.cur_line_idx
+        s = str(line_idx + 1)
+        s = " " * (len(str(self.total_lines)) - len(s)) + s + "| "
+        self.tty.write(s.encode("utf8"))
 
     def _show_line(self, line: str):
         self.tty.write(line.encode("utf8"))
