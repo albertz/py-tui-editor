@@ -111,10 +111,15 @@ class TuiEditor:
         """main loop, reading user inputs"""
         while True:
             buf = os.read(self.tty.fd_in, 32)
+            if buf and buf[:1] not in b"\x1b\x7f" and buf[0] > 31:
+                try:
+                    buf = buf.decode("utf8")
+                except UnicodeDecodeError:
+                    pass
             sz = len(buf)
             i = 0
             while i < sz:
-                if buf[0] == 0x1b:
+                if isinstance(buf, bytes) and buf[0] == 0x1b:
                     key = buf
                     i = len(buf)
                 else:
@@ -315,7 +320,7 @@ class TuiEditor:
             return False
         return True
 
-    def handle_key(self, key: Union[bytes, int]):
+    def handle_key(self, key: Union[bytes, str, int]):
         """
         Handle potential edit key and update screen.
         Assumes the cursor is at the right position.
@@ -355,17 +360,19 @@ class TuiEditor:
                 self.tty.update_occupied_space()  # actual height might have decreased
                 self.update_screen()
         elif isinstance(key, int):
-            pass
-        elif key[0] == 0x1b or len(key) > 1 or ord(key) <= 31:  # other control char
-            pass
-        else:
-            cur_line = cur_line[:self.col] + str(key, "utf-8") + cur_line[self.col:]
+            return
+        elif isinstance(key, bytes) and key[0] == 0x1b:
+            return
+        elif len(key) == 1 and ord(key) <= 31:  # other control char
+            return
+        elif isinstance(key, str):
+            cur_line = cur_line[:self.col] + key + cur_line[self.col:]
             self._content[self.cur_line_idx] = cur_line
             self.col += 1
             self.update_line()
         self.on_edit()
 
-    def on_key(self, key: Union[bytes, int]) -> Union[bool, None]:
+    def on_key(self, key: Union[bytes, str, int]) -> Union[bool, None]:
         """
         Called on input key events.
 
