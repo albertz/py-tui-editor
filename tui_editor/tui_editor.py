@@ -51,7 +51,7 @@ class TuiEditor:
 
     def set_text_lines(self, lines: list[str]):
         """set editor text"""
-        self._content = lines or [""]
+        self._content = lines.copy() or [""]
         if self.tty.initialized:
             self.update_screen()
 
@@ -61,7 +61,7 @@ class TuiEditor:
 
     def get_text_lines(self):
         """get editor text"""
-        return self._content
+        return self._content.copy()
 
     def get_text(self) -> str:
         """get editor text"""
@@ -69,7 +69,7 @@ class TuiEditor:
 
     def set_status_lines(self, lines: list[str]):
         """set status bar"""
-        self._status_content = lines or [""]
+        self._status_content = lines.copy() or [""]
         if self.tty.initialized:
             self.update_screen_status()
 
