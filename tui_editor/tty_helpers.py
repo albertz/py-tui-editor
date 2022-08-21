@@ -34,11 +34,13 @@ class TtyController:
         self.update_screen = update_screen
         self._orig_termios = None
         self._orig_sig_win_ch = None
+        self.initialized = False
 
     def init_tty(self):
         """init raw TTY mode, reserve space (via total_height)"""
         self._orig_termios = termios.tcgetattr(self.fd_in)
         tty.setraw(self.fd_in)
+        self.initialized = True
         self.write(b"\x1b[?7l")  # No Auto-Wrap Mode (DECAWM)
 
         # make enough space
@@ -70,6 +72,7 @@ class TtyController:
             self.write(b"\r\n")
         termios.tcsetattr(self.fd_in, termios.TCSANOW, self._orig_termios)
         signal.signal(signal.SIGWINCH, self._orig_sig_win_ch)
+        self.initialized = False
 
     def write(self, s: bytes):
         """raw write"""

@@ -29,8 +29,6 @@ class TuiEditor:
         self.col = 0
         self.height = 10  # lines for editor only, excluding status bars
         self.show_line_numbers = False
-        self._orig_termios = None
-        self._orig_sig_win_ch = None
         self.content_prefix_escape = b"\x1b[30;106m"
         self.status_prefix_escape = b"\x1b[30;102m"
         self._content = [""]
@@ -54,10 +52,12 @@ class TuiEditor:
     def set_text_lines(self, lines: list[str]):
         """set editor text"""
         self._content = lines or [""]
+        if self.tty.initialized:
+            self.update_screen()
 
     def set_text(self, text: str):
         """set editor text"""
-        self._content = text.split("\n")
+        self.set_text_lines(text.split("\n"))
 
     def get_text_lines(self):
         """get editor text"""
@@ -70,7 +70,8 @@ class TuiEditor:
     def set_status_lines(self, lines: list[str]):
         """set status bar"""
         self._status_content = lines or [""]
-        self.update_screen_status()
+        if self.tty.initialized:
+            self.update_screen_status()
 
     def set_cursor_pos(self, line: int, col: int = 0):
         """
@@ -80,6 +81,8 @@ class TuiEditor:
             self.top_line_idx = max(line - self.actual_height // 2, 0)
         self.row = line - self.top_line_idx
         self.col = col
+        if self.tty.initialized:
+            self.update_screen()
 
     def set_cursor(self):
         """set the cursor back to the editor pos"""
@@ -109,6 +112,7 @@ class TuiEditor:
 
     def loop(self):
         """main loop, reading user inputs"""
+        assert self.tty.initialized
         while True:
             buf = os.read(self.tty.fd_in, 32)
             if buf and buf[:1] not in b"\x1b\x7f" and buf[0] > 31:
@@ -141,6 +145,7 @@ class TuiEditor:
 
     def update_screen(self):
         """update the screen, i.e. editor and status bar(s)"""
+        assert self.tty.initialized
         self.tty.cursor(False)
         self.tty.goto(0, 0)
         self.tty.write(self.content_prefix_escape)
@@ -166,6 +171,7 @@ class TuiEditor:
 
         :param goto: set the cursor ot the status bar, and then back to the editor
         """
+        assert self.tty.initialized
         if goto:
             self.tty.cursor(False)
             self.tty.goto(self.actual_height, 0)
