@@ -310,9 +310,15 @@ class TuiEditor:
                 self.tty.update_occupied_space()  # actual height might have decreased
                 self.update_screen()
         elif key == KEY_DELETE:
-            cur_line = cur_line[:self.col] + cur_line[self.col + 1:]
-            self._content[self.cur_line_idx] = cur_line
-            self.update_line()
+            if self.col < len(cur_line):
+                cur_line = cur_line[:self.col] + cur_line[self.col + 1:]
+                self._content[self.cur_line_idx] = cur_line
+                self.update_line()
+            elif self.col == len(cur_line) and self.cur_line_idx < len(self._content) - 1:
+                self._content[self.cur_line_idx] += self._content[self.cur_line_idx + 1]
+                self._content.pop(self.cur_line_idx + 1)
+                self.tty.update_occupied_space()  # actual height might have decreased
+                self.update_screen()
         elif isinstance(key, int):
             pass
         elif ord(key) <= 31:  # other control char
