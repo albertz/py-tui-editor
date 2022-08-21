@@ -177,32 +177,32 @@ class TuiEditor:
             self.set_cursor()
             self.tty.cursor(True)
 
-    def update_line(self):
+    def update_line(self, *, margin_logic_cur_line=True):
         """
         Update just the current line, assuming that the cursor is in the right line.
         """
         self.tty.cursor(False)
         self.tty.write(b"\r")
         self.tty.write(self.content_prefix_escape)
-        self._show_content_line(self.cur_line_idx)
+        self._show_content_line(self.cur_line_idx, margin_logic_cur_line=margin_logic_cur_line)
         self.set_cursor()
         self.tty.cursor(True)
 
-    def _maybe_update_line_after_cursor_change(self):
+    def _maybe_update_line_after_cursor_change(self, *, is_old_line=False):
         self.set_cursor()
         line = self._content[self.cur_line_idx]
         width = self.tty.width
         if self.show_line_numbers:
             width -= len(str(self.total_lines)) + 2
         if len(line) >= width:
-            self.update_line()
+            self.update_line(margin_logic_cur_line=not is_old_line)
             return True
         return False
 
-    def _show_content_line(self, line_idx: int):
+    def _show_content_line(self, line_idx: int, *, margin_logic_cur_line=True):
         self._show_line_number(line_idx)
         line = self._content[line_idx]
-        if line_idx == self.cur_line_idx:
+        if margin_logic_cur_line and line_idx == self.cur_line_idx:
             width = self.tty.width
             col = self.col
             if self.show_line_numbers:
@@ -225,26 +225,36 @@ class TuiEditor:
         self.tty.write(line.encode("utf8"))
         self.tty.clear_to_eol()
 
-    def _move_cursor_next_line(self):
+    def _move_cursor_next_line(self, *, update=True):
+        self._maybe_update_line_after_cursor_change(is_old_line=True)
         if self.row + 1 == self.height:
             self.top_line_idx += 1
             self.adjust_cursor_eol()
+            if update:
+                self.update_screen()
             return True
         else:
             self.row += 1
             self.adjust_cursor_eol()
+            if update:
+                self._maybe_update_line_after_cursor_change()
             return False
 
-    def _move_cursor_prev_line(self):
+    def _move_cursor_prev_line(self, *, update=True):
+        self._maybe_update_line_after_cursor_change(is_old_line=True)
         if self.row == 0:
             if self.top_line_idx > 0:
                 self.top_line_idx -= 1
                 self.adjust_cursor_eol()
+                if update:
+                    self.update_screen()
                 return True
             return False
         else:
             self.row -= 1
             self.adjust_cursor_eol()
+            if update:
+                self._maybe_update_line_after_cursor_change()
             return False
 
     def handle_cursor_keys(self, key):
@@ -257,24 +267,24 @@ class TuiEditor:
         """
         if key == KEY_DOWN:
             if self.cur_line_idx + 1 != self.total_lines:
-                if self._move_cursor_next_line():
-                    self.update_screen()
-                else:
-                    self._maybe_update_line_after_cursor_change()
+                self._move_cursor_next_line()
         elif key == KEY_UP:
             if self.cur_line_idx > 0:
-                if self._move_cursor_prev_line():
-                    self.update_screen()
-                else:
-                    self._maybe_update_line_after_cursor_change()
+                self._move_cursor_prev_line()
         elif key == KEY_LEFT:
             if self.col > 0:
                 self.col -= 1
                 self._maybe_update_line_after_cursor_change()
+            elif self.cur_line_idx > 0:
+                self.col = len(self._content[self.cur_line_idx - 1])
+                self._move_cursor_prev_line()
         elif key == KEY_RIGHT:
-            self.col += 1
-            self.adjust_cursor_eol()
-            self._maybe_update_line_after_cursor_change()
+            if self.col < len(self._content[self.cur_line_idx]):
+                self.col += 1
+                self._maybe_update_line_after_cursor_change()
+            elif self.cur_line_idx < len(self._content) - 1:
+                self.col = 0
+                self._move_cursor_next_line()
         elif key == KEY_HOME:
             self.col = 0
             self._maybe_update_line_after_cursor_change()
@@ -315,7 +325,7 @@ class TuiEditor:
             self._content[self.cur_line_idx] = cur_line[:self.col]
             self._content.insert(self.cur_line_idx + 1, cur_line[self.col:])
             self.col = 0
-            self._move_cursor_next_line()
+            self._move_cursor_next_line(update=False)
             self.tty.update_occupied_space()  # actual height will increase
             self.update_screen()
         elif key == KEY_BACKSPACE:
