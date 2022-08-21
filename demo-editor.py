@@ -26,7 +26,7 @@ def main():
 
     e.on_cursor_pos_change = (
         lambda: e.set_status_lines([
-            "line: %d/%d" % (e.cur_line + 1, e.total_lines),
+            "line: %d/%d" % (e.cur_line_idx + 1, e.total_lines),
             "col: %d" % e.col,
             ]))
 

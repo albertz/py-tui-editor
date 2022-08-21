@@ -24,50 +24,29 @@ class TuiEditor:
                  control_key_abort: Optional[str] = "C",  # raises KeyboardInterrupt
                  control_key_quit: Optional[str] = "S",  # normal quit
                  ):
-        self.top_line = 0
+        self.top_line_idx = 0
         self.row = 0
         self.col = 0
-        self.height = 10  # 25
+        self.height = 10  # lines for editor only, excluding status bars
         self._orig_termios = None
         self._orig_sig_win_ch = None
         self.content_prefix_escape = b"\x1b[30;106m"
+        self.status_prefix_escape = b"\x1b[30;102m"
         self._content = [""]
         self._status_content = [""]
         self._control_key_abort = _control_key(control_key_abort)
         self._control_key_quit = _control_key(control_key_quit)
         self.tty = TtyController(
-            total_height=lambda: self.max_visible_height + len(self._status_content),
+            total_height=lambda: self.actual_height + len(self._status_content),
             update_screen=self.update_screen,
         )
 
     def edit(self):
+        """enter raw tty, enter loop, and exit raw tty at the end"""
         self.tty.init_tty()
         try:
             self.update_screen()
-            while True:
-                buf = os.read(self.tty.fd_in, 32)
-                sz = len(buf)
-                i = 0
-                while i < sz:
-                    if buf[0] == 0x1b:
-                        key = buf
-                        i = len(buf)
-                    else:
-                        key = buf[i:i + 1]
-                        i += 1
-                    if key in KEYMAP:
-                        key = KEYMAP[key]
-                    if self.on_key(key):
-                        continue
-                    if key == self._control_key_abort:
-                        raise KeyboardInterrupt
-                    if key == self._control_key_quit:
-                        return
-                    if self.handle_cursor_keys(key):
-                        self.on_cursor_pos_change()
-                        continue
-                    self.handle_key(key)
-                    self.on_cursor_pos_change()
+            self.loop()
         finally:
             self.tty.deinit_tty()
 
@@ -88,12 +67,12 @@ class TuiEditor:
         lines = lines or [""]
         # assume we have already drawn the screen before
         if len(lines) < len(self._status_content):
-            self.tty.goto(self.max_visible_height, 0)
+            self.tty.goto(self.actual_height, 0)
             self.tty.write(b"\x1b[0m\x1b[%iM" % (len(self._status_content) - len(lines)))
         elif len(lines) > len(self._status_content):
-            self.tty.goto(self.max_visible_height, 0)
+            self.tty.goto(self.actual_height, 0)
             self.tty.write(b"\n" * (len(lines) - 1))
-            self.tty.update_editor_row_offset(self.max_visible_height + len(lines) - 1)
+            self.tty.update_editor_row_offset(self.actual_height + len(lines) - 1)
         self._status_content = lines
         self.update_screen_status()
 
@@ -101,7 +80,7 @@ class TuiEditor:
         self.tty.goto(self.row, self.col)
 
     def adjust_cursor_eol(self):
-        l = len(self._content[self.cur_line])
+        l = len(self._content[self.cur_line_idx])
         if self.col > l:
             self.col = l
 
@@ -110,8 +89,34 @@ class TuiEditor:
         return len(self._content)
 
     @property
-    def cur_line(self):
-        return self.top_line + self.row
+    def cur_line_idx(self) -> int:
+        return self.top_line_idx + self.row
+
+    def loop(self):
+        while True:
+            buf = os.read(self.tty.fd_in, 32)
+            sz = len(buf)
+            i = 0
+            while i < sz:
+                if buf[0] == 0x1b:
+                    key = buf
+                    i = len(buf)
+                else:
+                    key = buf[i:i + 1]
+                    i += 1
+                if key in KEYMAP:
+                    key = KEYMAP[key]
+                if self.on_key(key):
+                    continue
+                if key == self._control_key_abort:
+                    raise KeyboardInterrupt
+                if key == self._control_key_quit:
+                    return
+                if self.handle_cursor_keys(key):
+                    self.on_cursor_pos_change()
+                    continue
+                self.handle_key(key)
+                self.on_cursor_pos_change()
 
     def update_screen(self):
         self.tty.cursor(False)
@@ -119,7 +124,7 @@ class TuiEditor:
         self.tty.write(self.content_prefix_escape)
         if self.tty.screen_top == 0:
             self.tty.cls()
-        i = self.top_line
+        i = self.top_line_idx
         for c in range(self.height):
             self.show_line(self._content[i])
             if self.tty.screen_top > 0:
@@ -133,14 +138,15 @@ class TuiEditor:
         self.tty.cursor(True)
 
     @property
-    def max_visible_height(self):
+    def actual_height(self) -> int:
+        """actual height of editor (excluding status bars)"""
         return min(self.height, self.total_lines)
 
     def update_screen_status(self, *, goto=True):
         if goto:
             self.tty.cursor(False)
-            self.tty.goto(self.max_visible_height, 0)
-        self.tty.write(b"\x1b[30;102m")
+            self.tty.goto(self.actual_height, 0)
+        self.tty.write(self.status_prefix_escape)
         assert self._status_content
         for c, line in enumerate(self._status_content):
             if c > 0:
@@ -158,7 +164,7 @@ class TuiEditor:
         self.tty.cursor(False)
         self.tty.write(b"\r")
         self.tty.write(self.content_prefix_escape)
-        self.show_line(self._content[self.cur_line])
+        self.show_line(self._content[self.cur_line_idx])
         self.tty.clear_to_eol()
         self.set_cursor()
         self.tty.cursor(True)
@@ -168,7 +174,7 @@ class TuiEditor:
 
     def next_line(self):
         if self.row + 1 == self.height:
-            self.top_line += 1
+            self.top_line_idx += 1
             self.adjust_cursor_eol()
             return True
         else:
@@ -178,8 +184,8 @@ class TuiEditor:
 
     def prev_line(self):
         if self.row == 0:
-            if self.top_line > 0:
-                self.top_line -= 1
+            if self.top_line_idx > 0:
+                self.top_line_idx -= 1
                 self.adjust_cursor_eol()
                 return True
             return False
@@ -190,13 +196,13 @@ class TuiEditor:
 
     def handle_cursor_keys(self, key):
         if key == KEY_DOWN:
-            if self.cur_line + 1 != self.total_lines:
+            if self.cur_line_idx + 1 != self.total_lines:
                 if self.next_line():
                     self.update_screen()
                 else:
                     self.set_cursor()
         elif key == KEY_UP:
-            if self.cur_line > 0:
+            if self.cur_line_idx > 0:
                 if self.prev_line():
                     self.update_screen()
                 else:
@@ -213,26 +219,26 @@ class TuiEditor:
             self.col = 0
             self.set_cursor()
         elif key == KEY_END:
-            self.col = len(self._content[self.cur_line])
+            self.col = len(self._content[self.cur_line_idx])
             self.set_cursor()
         elif key == KEY_PGUP:
-            self.top_line -= self.height
-            if self.top_line < 0:
-                self.top_line = 0
+            self.top_line_idx -= self.height
+            if self.top_line_idx < 0:
+                self.top_line_idx = 0
                 self.row = 0
-            elif self.cur_line < 0:
+            elif self.cur_line_idx < 0:
                 self.row = 0
             self.adjust_cursor_eol()
             self.update_screen()
         elif key == KEY_PGDN:
-            self.top_line += self.height
-            if self.cur_line >= self.total_lines:
-                self.top_line = self.total_lines - self.height
-                if self.top_line >= 0:
+            self.top_line_idx += self.height
+            if self.cur_line_idx >= self.total_lines:
+                self.top_line_idx = self.total_lines - self.height
+                if self.top_line_idx >= 0:
                     self.row = self.height - 1
                 else:
-                    self.top_line = 0
-                    self.row = self.cur_line
+                    self.top_line_idx = 0
+                    self.row = self.cur_line_idx
             self.adjust_cursor_eol()
             self.update_screen()
         else:
@@ -240,46 +246,46 @@ class TuiEditor:
         return True
 
     def handle_key(self, key: Union[bytes, int]):
-        l = self._content[self.cur_line]
+        cur_line = self._content[self.cur_line_idx]
         if key == KEY_ENTER:
             if len(self._content) < self.height:
                 self.tty.cursor(False)
-                self.tty.goto(self.max_visible_height + len(self._status_content) - 1, 0)
+                self.tty.goto(self.actual_height + len(self._status_content) - 1, 0)
                 self.tty.write(b"\r\n")  # make space for new line at end
-                self.tty.update_editor_row_offset(self.max_visible_height + len(self._status_content))
-            self._content[self.cur_line] = l[:self.col]
-            self._content.insert(self.cur_line + 1, l[self.col:])
+                self.tty.update_editor_row_offset(self.actual_height + len(self._status_content))
+            self._content[self.cur_line_idx] = cur_line[:self.col]
+            self._content.insert(self.cur_line_idx + 1, cur_line[self.col:])
             self.col = 0
             self.next_line()
             self.update_screen()
         elif key == KEY_BACKSPACE:
             if self.col > 0:
                 self.col -= 1
-                l = l[:self.col] + l[self.col + 1:]
-                self._content[self.cur_line] = l
+                cur_line = cur_line[:self.col] + cur_line[self.col + 1:]
+                self._content[self.cur_line_idx] = cur_line
                 self.update_line()
-            elif self.col == 0 and self.cur_line > 0:
-                self.col = len(self._content[self.cur_line - 1])
-                self._content[self.cur_line - 1] += self._content[self.cur_line]
-                self._content.pop(self.cur_line)
-                if self.top_line > 0 and self.top_line + self.height > len(self._content):
-                    self.top_line -= 1
+            elif self.col == 0 and self.cur_line_idx > 0:
+                self.col = len(self._content[self.cur_line_idx - 1])
+                self._content[self.cur_line_idx - 1] += self._content[self.cur_line_idx]
+                self._content.pop(self.cur_line_idx)
+                if self.top_line_idx > 0 and self.top_line_idx + self.height > len(self._content):
+                    self.top_line_idx -= 1
                 elif self.row > 0:
                     self.row -= 1
                 if len(self._content) < self.height:
                     self.tty.write(b"\x1b[0m\x1b[1M")  # delete one line
                 self.update_screen()
         elif key == KEY_DELETE:
-            l = l[:self.col] + l[self.col + 1:]
-            self._content[self.cur_line] = l
+            cur_line = cur_line[:self.col] + cur_line[self.col + 1:]
+            self._content[self.cur_line_idx] = cur_line
             self.update_line()
         elif isinstance(key, int):
             pass
         elif ord(key) <= 31:  # other control char
             pass
         else:
-            l = l[:self.col] + str(key, "utf-8") + l[self.col:]
-            self._content[self.cur_line] = l
+            cur_line = cur_line[:self.col] + str(key, "utf-8") + cur_line[self.col:]
+            self._content[self.cur_line_idx] = cur_line
             self.col += 1
             self.update_line()
         self.on_edit()
