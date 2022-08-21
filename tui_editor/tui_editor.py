@@ -307,8 +307,7 @@ class TuiEditor:
                     self.top_line_idx -= 1
                 elif self.row > 0:
                     self.row -= 1
-                if len(self._content) < self.height:
-                    self.tty.write(b"\x1b[0m\x1b[1M")  # delete one line
+                self.tty.update_occupied_space()  # actual height might have decreased
                 self.update_screen()
         elif key == KEY_DELETE:
             cur_line = cur_line[:self.col] + cur_line[self.col + 1:]
