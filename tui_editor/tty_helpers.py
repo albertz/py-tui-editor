@@ -2,7 +2,7 @@
 TTY helpers
 """
 
-# https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
+# https://en.wikipedia.org/wiki/ANSI_escape_code
 # https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 
 from __future__ import annotations

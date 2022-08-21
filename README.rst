@@ -120,5 +120,5 @@ https://github.com/pfalcon/picotui/blob/master/seditor.py
 References
 **********
 
-https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
-https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-The-Alternate-Screen-Buffer
+https://en.wikipedia.org/wiki/ANSI_escape_code
+https://invisible-island.net/xterm/ctlseqs/ctlseqs.html

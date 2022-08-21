@@ -9,7 +9,7 @@ Simple TUI editor
 # Copyright (c) 2015 Paul Sokolovsky, (c) 2022 Albert Zeyer
 # Distributed under MIT License
 
-# https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
+# https://en.wikipedia.org/wiki/ANSI_escape_code
 # https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 
 from __future__ import annotations
