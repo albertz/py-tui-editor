@@ -123,13 +123,9 @@ class TuiEditor:
         self.tty.cursor(False)
         self.tty.goto(0, 0)
         self.tty.write(self.content_prefix_escape)
-        if self.tty.screen_top == 0:
-            self.tty.cls()
         i = self.top_line_idx
         for c in range(self.height):
-            self.show_line(self._content[i])
-            if self.tty.screen_top > 0:
-                self.tty.clear_to_eol()
+            self._show_line(self._content[i])
             self.tty.write(b"\r\n")
             i += 1
             if i == self.total_lines:
@@ -157,9 +153,7 @@ class TuiEditor:
         for c, line in enumerate(self._status_content):
             if c > 0:
                 self.tty.write(b"\n")
-            self.show_line(line)
-            if self.tty.screen_top > 0:
-                self.tty.clear_to_eol()
+            self._show_line(line)
             self.tty.write(b"\r")
         self.tty.write(b"\x1b[0m")
         if goto:
@@ -173,13 +167,13 @@ class TuiEditor:
         self.tty.cursor(False)
         self.tty.write(b"\r")
         self.tty.write(self.content_prefix_escape)
-        self.show_line(self._content[self.cur_line_idx])
-        self.tty.clear_to_eol()
+        self._show_line(self._content[self.cur_line_idx])
         self.set_cursor()
         self.tty.cursor(True)
 
-    def show_line(self, line: str):
+    def _show_line(self, line: str):
         self.tty.write(line.encode("utf8"))
+        self.tty.clear_to_eol()
 
     def next_line(self):
         if self.row + 1 == self.height:
@@ -257,7 +251,7 @@ class TuiEditor:
     def handle_key(self, key: Union[bytes, int]):
         cur_line = self._content[self.cur_line_idx]
         if key == KEY_ENTER:
-            if len(self._content) < self.height:
+            if len(self._content) < self.height:  # actual height will increase
                 self.tty.cursor(False)
                 self.tty.goto(self.actual_height + len(self._status_content) - 1, 0)
                 self.tty.write(b"\r\n")  # make space for new line at end
@@ -300,14 +294,26 @@ class TuiEditor:
         self.on_edit()
 
     def on_key(self, key: Union[bytes, int]) -> Union[bool, None]:
-        # Overwrite this function if you want. Return True -> we consumed the event.
+        """
+        Called on input key events.
+
+        :param key:
+        :return: True -> the function consumed the event, i.e. the event should not be passed on further
+        """
+        # Overwrite this function if you want.
         pass
 
     def on_cursor_pos_change(self):
+        """
+        Called on (potential) cursor position changes.
+        """
         # Overwrite this function if you want.
         pass
 
     def on_edit(self):
+        """
+        Called on (potential) edits.
+        """
         # Overwrite this function if you want.
         pass
 
