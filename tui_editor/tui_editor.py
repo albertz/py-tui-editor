@@ -71,6 +71,15 @@ class TuiEditor:
         self._status_content = lines or [""]
         self.update_screen_status()
 
+    def set_cursor_pos(self, line: int, col: int = 0):
+        """
+        Set the cursor position (row/col), by line/col
+        """
+        if self.top_line_idx > line or self.top_line_idx + self.actual_height <= line:
+            self.top_line_idx = max(line - self.actual_height // 2, 0)
+        self.row = line - self.top_line_idx
+        self.col = col
+
     def set_cursor(self):
         """set the cursor back to the editor pos"""
         self.tty.goto(self.row, self.col)
