@@ -93,6 +93,7 @@ class TuiEditor:
         return self.top_line_idx + self.row
 
     def loop(self):
+        """main loop, reading user inputs"""
         while True:
             buf = os.read(self.tty.fd_in, 32)
             sz = len(buf)
@@ -143,6 +144,11 @@ class TuiEditor:
         return min(self.height, self.total_lines)
 
     def update_screen_status(self, *, goto=True):
+        """
+        Update the screen status bar(s).
+
+        :param goto: set the cursor ot the status bar, and then back to the editor
+        """
         if goto:
             self.tty.cursor(False)
             self.tty.goto(self.actual_height, 0)
@@ -161,6 +167,9 @@ class TuiEditor:
             self.tty.cursor(True)
 
     def update_line(self):
+        """
+        Update just the current line, assuming that the cursor is in the right line.
+        """
         self.tty.cursor(False)
         self.tty.write(b"\r")
         self.tty.write(self.content_prefix_escape)
