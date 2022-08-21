@@ -28,6 +28,7 @@ class TtyController:
         self.row = 0
         self.col = 0
         self.screen_top = 0
+        self.width = os.get_terminal_size(self.fd_out).columns
         self.prev_total_height = 1  # assume we are already in a new line
         self.total_height = total_height
         self.update_screen = update_screen
@@ -46,6 +47,7 @@ class TtyController:
 
         def _on_resize(_signum, _frame):
             self._update_editor_row_offset()
+            self.width = os.get_terminal_size(self.fd_out).columns
             # If the colum size changed, and this wraps around existing text,
             # this is not handled correctly yet...
             # Updating the screen might be a good idea anyway.

@@ -83,10 +83,13 @@ class TuiEditor:
 
     def set_cursor(self):
         """set the cursor back to the editor pos"""
-        col_offset = 0
+        width = self.tty.width
+        col = self.col
         if self.show_line_numbers:
-            col_offset += len(str(self.total_lines)) + 2
-        self.tty.goto(self.row, self.col + col_offset)
+            col += len(str(self.total_lines)) + 2
+        while col >= width - 1:
+            col -= width // 3  # see _show_content_line
+        self.tty.goto(self.row, col)
 
     def adjust_cursor_eol(self):
         """when the cur line changed, potentially fix cursor pos col"""
@@ -138,8 +141,7 @@ class TuiEditor:
         self.tty.write(self.content_prefix_escape)
         i = self.top_line_idx
         for c in range(self.height):
-            self._show_line_number(self.top_line_idx + c)
-            self._show_line(self._content[i])
+            self._show_content_line(i)
             self.tty.write(b"\r\n")
             i += 1
             if i == self.total_lines:
@@ -182,10 +184,33 @@ class TuiEditor:
         self.tty.cursor(False)
         self.tty.write(b"\r")
         self.tty.write(self.content_prefix_escape)
-        self._show_line_number()
-        self._show_line(self._content[self.cur_line_idx])
+        self._show_content_line(self.cur_line_idx)
         self.set_cursor()
         self.tty.cursor(True)
+
+    def _maybe_update_line_after_cursor_change(self):
+        self.set_cursor()
+        line = self._content[self.cur_line_idx]
+        width = self.tty.width
+        if self.show_line_numbers:
+            width -= len(str(self.total_lines)) + 2
+        if len(line) >= width:
+            self.update_line()
+            return True
+        return False
+
+    def _show_content_line(self, line_idx: int):
+        self._show_line_number(line_idx)
+        line = self._content[line_idx]
+        if line_idx == self.cur_line_idx:
+            width = self.tty.width
+            col = self.col
+            if self.show_line_numbers:
+                col += len(str(self.total_lines)) + 2
+            while col >= width - 1:  # keep consistent to set_cursor
+                col -= width // 3
+                line = line[width // 3:]
+        self._show_line(line)
 
     def _show_line_number(self, line_idx: int = None):
         if not self.show_line_numbers:
@@ -235,27 +260,27 @@ class TuiEditor:
                 if self._move_cursor_next_line():
                     self.update_screen()
                 else:
-                    self.set_cursor()
+                    self._maybe_update_line_after_cursor_change()
         elif key == KEY_UP:
             if self.cur_line_idx > 0:
                 if self._move_cursor_prev_line():
                     self.update_screen()
                 else:
-                    self.set_cursor()
+                    self._maybe_update_line_after_cursor_change()
         elif key == KEY_LEFT:
             if self.col > 0:
                 self.col -= 1
-                self.set_cursor()
+                self._maybe_update_line_after_cursor_change()
         elif key == KEY_RIGHT:
             self.col += 1
             self.adjust_cursor_eol()
-            self.set_cursor()
+            self._maybe_update_line_after_cursor_change()
         elif key == KEY_HOME:
             self.col = 0
-            self.set_cursor()
+            self._maybe_update_line_after_cursor_change()
         elif key == KEY_END:
             self.col = len(self._content[self.cur_line_idx])
-            self.set_cursor()
+            self._maybe_update_line_after_cursor_change()
         elif key == KEY_PGUP:
             self.top_line_idx -= self.height
             if self.top_line_idx < 0:
