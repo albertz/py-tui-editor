@@ -356,7 +356,7 @@ class TuiEditor:
                 self.update_screen()
         elif isinstance(key, int):
             pass
-        elif ord(key) <= 31:  # other control char
+        elif key[0] == 0x1b or len(key) > 1 or ord(key) <= 31:  # other control char
             pass
         else:
             cur_line = cur_line[:self.col] + str(key, "utf-8") + cur_line[self.col:]

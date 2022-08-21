@@ -164,6 +164,8 @@ KEYMAP = {
     b"\x1b[C": KEY_RIGHT,
     b"\x1bOH": KEY_HOME,
     b"\x1bOF": KEY_END,
+    b"\x1bb": KEY_HOME,
+    b"\x1bf": KEY_END,
     b"\x1b[1~": KEY_HOME,
     b"\x1b[4~": KEY_END,
     b"\x1b[5~": KEY_PGUP,

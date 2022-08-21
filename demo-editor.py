@@ -37,4 +37,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        import better_exchook  # noqa
+        better_exchook.install()
+    except ImportError:
+        pass
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt")
