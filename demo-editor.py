@@ -18,7 +18,7 @@ def main():
     with open(args.file) as f:
         content = f.read().split('\n')
 
-    print("Hello editor!")
+    print("Hello editor! Ctrl+S to quit.")
 
     e = TuiEditor()
     e.set_text_lines(content)

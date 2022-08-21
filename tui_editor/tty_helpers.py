@@ -2,6 +2,9 @@
 TTY helpers
 """
 
+# https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
+# https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+
 from __future__ import annotations
 from typing import Callable
 import os
@@ -53,6 +56,7 @@ class TtyController:
 
     def deinit_tty(self, clear_editor=True):
         self.write(b"\x1b[0m")
+        self.write(b"\x1b[?7h")  # Auto-Wrap Mode (DECAWM)
         num_lines = self.total_height()
         if clear_editor:
             self.goto(0, 0)
@@ -112,7 +116,6 @@ KEY_HOME = 5
 KEY_END = 6
 KEY_PGUP = 7
 KEY_PGDN = 8
-KEY_QUIT = 9
 KEY_ENTER = 10
 KEY_BACKSPACE = 11
 KEY_DELETE = 12
@@ -128,7 +131,6 @@ KEYMAP = {
     b"\x1b[4~": KEY_END,
     b"\x1b[5~": KEY_PGUP,
     b"\x1b[6~": KEY_PGDN,
-    b"\x03": KEY_QUIT,
     b"\r": KEY_ENTER,
     b"\x7f": KEY_BACKSPACE,
     b"\x1b[3~": KEY_DELETE,
