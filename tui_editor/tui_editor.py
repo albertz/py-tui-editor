@@ -68,15 +68,7 @@ class TuiEditor:
 
     def set_status_lines(self, lines: list[str]):
         """set status bar"""
-        assert self._status_content
-        lines = lines or [""]
-        prev_lines = self._status_content
-        self._status_content = lines
-        # assume we have already drawn the screen before
-        if len(lines) != len(prev_lines):
-            self.tty.cursor(False)
-            self.tty.goto(self.actual_height, 0)
-            self.tty.update_occupied_space()
+        self._status_content = lines or [""]
         self.update_screen_status()
 
     def set_cursor(self):
@@ -156,6 +148,7 @@ class TuiEditor:
         if goto:
             self.tty.cursor(False)
             self.tty.goto(self.actual_height, 0)
+            self.tty.update_occupied_space()
         self.tty.write(self.status_prefix_escape)
         assert self._status_content
         for c, line in enumerate(self._status_content):

@@ -119,6 +119,7 @@ class TtyController:
         Update occupied space.
         When new lines are added, they are always added at the end.
         When lines are deleted, they are deleted at the current cursor.
+        The cursor row stays the same.
         """
         total_height = self.total_height()
         assert total_height > 0 and self.prev_total_height > 0
@@ -127,6 +128,7 @@ class TtyController:
 
         self.cursor(False)
         self.write(b"\r\x1b[0m")
+        prev_row = self.row
         if total_height > self.prev_total_height:
             if self.row != self.prev_total_height - 1:
                 self.goto(self.prev_total_height - 1, 0)
@@ -134,6 +136,7 @@ class TtyController:
             self.write(b"\n" * num_lines)
             self.row = total_height - 1
             self._update_editor_row_offset()
+            self.goto(prev_row, 0)
         elif total_height < self.prev_total_height:
             num_lines = self.prev_total_height - total_height
             self.write(b"\x1b[%iM" % num_lines)  # delete lines
