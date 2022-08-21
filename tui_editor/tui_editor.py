@@ -51,18 +51,23 @@ class TuiEditor:
             self.tty.deinit_tty()
 
     def set_text_lines(self, lines: list[str]):
+        """set editor text"""
         self._content = lines or [""]
 
     def set_text(self, text: str):
+        """set editor text"""
         self._content = text.split("\n")
 
     def get_text_lines(self):
+        """get editor text"""
         return self._content
 
     def get_text(self) -> str:
+        """get editor text"""
         return "\n".join(self._content)
 
     def set_status_lines(self, lines: list[str]):
+        """set status bar"""
         assert self._status_content
         lines = lines or [""]
         # assume we have already drawn the screen before
@@ -77,19 +82,23 @@ class TuiEditor:
         self.update_screen_status()
 
     def set_cursor(self):
+        """set the cursor back to the editor pos"""
         self.tty.goto(self.row, self.col)
 
     def adjust_cursor_eol(self):
-        l = len(self._content[self.cur_line_idx])
-        if self.col > l:
-            self.col = l
+        """when the cur line changed, potentially fix cursor pos col"""
+        cur_line_len = len(self._content[self.cur_line_idx])
+        if self.col > cur_line_len:
+            self.col = cur_line_len
 
     @property
     def total_lines(self):
+        """total number of text lines (potentially not all are visible)"""
         return len(self._content)
 
     @property
     def cur_line_idx(self) -> int:
+        """cursor line index"""
         return self.top_line_idx + self.row
 
     def loop(self):
@@ -120,6 +129,7 @@ class TuiEditor:
                 self.on_cursor_pos_change()
 
     def update_screen(self):
+        """update the screen, i.e. editor and status bar(s)"""
         self.tty.cursor(False)
         self.tty.goto(0, 0)
         self.tty.write(self.content_prefix_escape)
@@ -175,7 +185,7 @@ class TuiEditor:
         self.tty.write(line.encode("utf8"))
         self.tty.clear_to_eol()
 
-    def next_line(self):
+    def _move_cursor_next_line(self):
         if self.row + 1 == self.height:
             self.top_line_idx += 1
             self.adjust_cursor_eol()
@@ -185,7 +195,7 @@ class TuiEditor:
             self.adjust_cursor_eol()
             return False
 
-    def prev_line(self):
+    def _move_cursor_prev_line(self):
         if self.row == 0:
             if self.top_line_idx > 0:
                 self.top_line_idx -= 1
@@ -198,15 +208,22 @@ class TuiEditor:
             return False
 
     def handle_cursor_keys(self, key):
+        """
+        Handle potential cursor-position-manipulating key,
+        potentially updating the cursor position
+        and potentially updating the screen.
+
+        :return: True, if we consumed the event, and it should not be handled further
+        """
         if key == KEY_DOWN:
             if self.cur_line_idx + 1 != self.total_lines:
-                if self.next_line():
+                if self._move_cursor_next_line():
                     self.update_screen()
                 else:
                     self.set_cursor()
         elif key == KEY_UP:
             if self.cur_line_idx > 0:
-                if self.prev_line():
+                if self._move_cursor_prev_line():
                     self.update_screen()
                 else:
                     self.set_cursor()
@@ -249,6 +266,10 @@ class TuiEditor:
         return True
 
     def handle_key(self, key: Union[bytes, int]):
+        """
+        Handle potential edit key and update screen.
+        Assumes the cursor is at the right position.
+        """
         cur_line = self._content[self.cur_line_idx]
         if key == KEY_ENTER:
             if len(self._content) < self.height:  # actual height will increase
@@ -259,7 +280,7 @@ class TuiEditor:
             self._content[self.cur_line_idx] = cur_line[:self.col]
             self._content.insert(self.cur_line_idx + 1, cur_line[self.col:])
             self.col = 0
-            self.next_line()
+            self._move_cursor_next_line()
             self.update_screen()
         elif key == KEY_BACKSPACE:
             if self.col > 0:
