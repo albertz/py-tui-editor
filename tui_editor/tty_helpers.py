@@ -28,24 +28,24 @@ class TtyController:
         self.row = 0
         self.col = 0
         self.screen_top = 0
+        self.prev_total_height = 1  # assume we are already in a new line
         self.total_height = total_height
         self.update_screen = update_screen
         self._orig_termios = None
         self._orig_sig_win_ch = None
 
     def init_tty(self):
+        """init raw TTY mode, reserve space (via total_height)"""
         self._orig_termios = termios.tcgetattr(self.fd_in)
         tty.setraw(self.fd_in)
         self.write(b"\x1b[?7l")  # No Auto-Wrap Mode (DECAWM)
 
         # make enough space
         # assuming nothing has been printed yet
-        num_lines = self.total_height() - 1
-        self.write(b"\n" * num_lines)
-        self.update_editor_row_offset(cur_row=num_lines)
+        self.update_occupied_space()
 
         def _on_resize(_signum, _frame):
-            self.update_editor_row_offset(self.row)
+            self._update_editor_row_offset()
             # If the colum size changed, and this wraps around existing text,
             # this is not handled correctly yet...
             # Updating the screen might be a good idea anyway.
@@ -55,6 +55,7 @@ class TtyController:
         signal.signal(signal.SIGWINCH, _on_resize)
 
     def deinit_tty(self, clear_editor=True):
+        """resets the tty to normal (non-raw) mode, recovering the original state before init_tty"""
         self.write(b"\x1b[0m")
         self.write(b"\x1b[?7h")  # Auto-Wrap Mode (DECAWM)
         num_lines = self.total_height()
@@ -69,18 +70,22 @@ class TtyController:
         signal.signal(signal.SIGWINCH, self._orig_sig_win_ch)
 
     def write(self, s: bytes):
+        """raw write"""
         assert isinstance(s, bytes)
         os.write(self.fd_out, s)
 
     def cls(self):
+        """clear screen"""
         self.write(b"\x1b[2J")
 
     def goto(self, row: int, col: int):
+        """change cursor position (relative to screen top)"""
         self.write(b"\x1b[%d;%dH" % (row + 1 + self.screen_top, col + 1))
         self.row = row
         self.col = col
 
     def get_cursor_pos_abs(self) -> (int, int):
+        """get absolute cursor position"""
         self.write(b"\x1b[6n")
         s = b""
         while True:
@@ -94,18 +99,45 @@ class TtyController:
         return int(row) - 1, int(col) - 1
 
     def clear_to_eol(self):
+        """clear to end of line"""
         self.write(b"\x1b[0K")
 
     def cursor(self, enabled: bool):
+        """show or hide cursor"""
         if enabled:
             self.write(b"\x1b[?25h")
         else:
             self.write(b"\x1b[?25l")
 
-    def update_editor_row_offset(self, cur_row):
+    def _update_editor_row_offset(self):
         row, col = self.get_cursor_pos_abs()
-        expected_row = self.screen_top + cur_row
+        expected_row = self.screen_top + self.row
         self.screen_top += row - expected_row
+
+    def update_occupied_space(self):
+        """
+        Update occupied space.
+        When new lines are added, they are always added at the end.
+        When lines are deleted, they are deleted at the current cursor.
+        """
+        total_height = self.total_height()
+        assert total_height > 0 and self.prev_total_height > 0
+        if total_height == self.prev_total_height:
+            return
+
+        self.cursor(False)
+        self.write(b"\r\x1b[0m")
+        if total_height > self.prev_total_height:
+            if self.row != self.prev_total_height - 1:
+                self.goto(self.prev_total_height - 1, 0)
+            num_lines = total_height - self.prev_total_height
+            self.write(b"\n" * num_lines)
+            self.row = total_height - 1
+            self._update_editor_row_offset()
+        elif total_height < self.prev_total_height:
+            num_lines = self.prev_total_height - total_height
+            self.write(b"\x1b[%iM" % num_lines)  # delete lines
+        self.prev_total_height = total_height
 
 
 KEY_UP = 1

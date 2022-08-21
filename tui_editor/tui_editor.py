@@ -70,15 +70,13 @@ class TuiEditor:
         """set status bar"""
         assert self._status_content
         lines = lines or [""]
-        # assume we have already drawn the screen before
-        if len(lines) < len(self._status_content):
-            self.tty.goto(self.actual_height, 0)
-            self.tty.write(b"\x1b[0m\x1b[%iM" % (len(self._status_content) - len(lines)))
-        elif len(lines) > len(self._status_content):
-            self.tty.goto(self.actual_height, 0)
-            self.tty.write(b"\n" * (len(lines) - 1))
-            self.tty.update_editor_row_offset(self.actual_height + len(lines) - 1)
+        prev_lines = self._status_content
         self._status_content = lines
+        # assume we have already drawn the screen before
+        if len(lines) != len(prev_lines):
+            self.tty.cursor(False)
+            self.tty.goto(self.actual_height, 0)
+            self.tty.update_occupied_space()
         self.update_screen_status()
 
     def set_cursor(self):
@@ -272,15 +270,11 @@ class TuiEditor:
         """
         cur_line = self._content[self.cur_line_idx]
         if key == KEY_ENTER:
-            if len(self._content) < self.height:  # actual height will increase
-                self.tty.cursor(False)
-                self.tty.goto(self.actual_height + len(self._status_content) - 1, 0)
-                self.tty.write(b"\r\n")  # make space for new line at end
-                self.tty.update_editor_row_offset(self.actual_height + len(self._status_content))
             self._content[self.cur_line_idx] = cur_line[:self.col]
             self._content.insert(self.cur_line_idx + 1, cur_line[self.col:])
             self.col = 0
             self._move_cursor_next_line()
+            self.tty.update_occupied_space()  # actual height will increase
             self.update_screen()
         elif key == KEY_BACKSPACE:
             if self.col > 0:
