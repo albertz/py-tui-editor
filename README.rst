@@ -70,19 +70,13 @@ Screenshot
 Screencast
 **********
 
-.. raw:: html
-
-    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
-        <iframe src="https://www.youtube.com/embed/zIFMyBkYwqg" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
-    </div>
+.. image:: https://img.youtube.com/vi/zIFMyBkYwqg/maxresdefault.jpg
+   :target: https://youtu.be/zIFMyBkYwqg
 
 This shows the ``demo-prompt.py`` and ``demo-editor.py``.
 
-.. raw:: html
-
-    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
-        <iframe src="https://www.youtube.com/embed/4ERr0o9k72Y" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
-    </div>
+.. image:: https://img.youtube.com/vi/4ERr0o9k72Y/maxresdefault.jpg
+   :target: https://youtu.be/4ERr0o9k72Y
 
 This uses a `very custom small app <https://github.com/albertz/playground/blob/master/pdf-extract-comments.py>`__,
 which I use to take over annotated PDF edits into my Latex file,
