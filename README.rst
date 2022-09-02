@@ -1,6 +1,12 @@
 Simple Python terminal (TUI) multi-line editor
 ##############################################
 
+Features:
+
+- simple multi-line editor
+- not whole screen but only next N lines
+- show interactive feedback. e.g. mark edits, show number of edits, show diff in separate plane or so
+
 This is just a simple multi-line editor for the terminal
 (VT100).
 It is a bit like
@@ -83,18 +89,6 @@ which I use to take over annotated PDF edits into my Latex file,
 where I get the editor, and it shows me the live-diff in the status bar of the editor.
 
 
-Motivation
-**********
-
-Python TUI?
-
-What I want:
-
-- simple multi-line editor
-- not whole screen but only next N lines
-- show interactive feedback. e.g. mark edits, show number of edits, show diff in separate plane or so
-
-
 Licence
 *******
 
@@ -112,6 +106,15 @@ History
 
 Related projects
 ****************
+
+Python terminal user interface (TUI) and related.
+
+The features stated in the beginning were the main motivation.
+The related work here did not really satisfy me in getting those features,
+or did not really make it simpler to accomplish them.
+(At least from a first glance to those other projects
+- maybe I'm missing sth! Please share a short demo,
+similar to the demos here, if you know how to easily implement it.)
 
 https://docs.python.org/3/library/curses.html
 - too complex but at the same time too limited?
