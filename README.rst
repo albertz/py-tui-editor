@@ -57,10 +57,36 @@ Predefined editable text:
     'Hello World!'
 
 
+See `demo-prompt.py <https://github.com/albertz/py-tui-editor/blob/main/demo-prompt.py>`__
+and `demo-editor.py <https://github.com/albertz/py-tui-editor/blob/main/demo-editor.py>`__.
+
+
 Screenshot
 **********
 
 .. image:: https://raw.githubusercontent.com/albertz/py-tui-editor/master/screenshots/2022-09-02.png?sanitize=true
+
+
+Screencast
+**********
+
+.. raw:: html
+
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+        <iframe src="//www.youtube.com/embed/zIFMyBkYwqg" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    </div>
+
+This shows the ``demo-prompt.py`` and ``demo-editor.py``.
+
+.. raw:: html
+
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+        <iframe src="//www.youtube.com/embed/4ERr0o9k72Y" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    </div>
+
+This uses a `very custom small app <https://github.com/albertz/playground/blob/master/pdf-extract-comments.py>`__,
+which I use to take over annotated PDF edits into my Latex file,
+where I get the editor, and it shows me the live-diff in the status bar of the editor.
 
 
 Motivation
