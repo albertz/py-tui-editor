@@ -5,7 +5,8 @@ Features:
 
 - simple multi-line editor
 - not whole screen but only next N lines
-- show interactive feedback. e.g. mark edits, show number of edits, show diff in separate plane or so
+- status bar (supporting multiple lines):
+  show interactive feedback. e.g. mark edits, show number of edits, show diff in separate plane or so
 
 This is just a simple multi-line editor for the terminal
 (VT100).
