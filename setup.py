@@ -37,6 +37,7 @@ import time
 from pprint import pprint
 import os
 import sys
+import shutil
 from subprocess import Popen, check_output, PIPE
 
 
@@ -88,41 +89,65 @@ def git_commit_date(commit="HEAD", git_dir="."):
     return out
 
 
-def git_head_version(git_dir="."):
+def git_head_version(git_dir=".", long=False):
     commit_date = git_commit_date(git_dir=git_dir)  # like "20190202.154527"
     # rev = git_commit_rev(git_dir=git_dir)
     # is_dirty = git_is_dirty(git_dir=git_dir)
     # Make this distutils.version.StrictVersion compatible.
-    return "1.%s" % commit_date
+    version = "1.%s" % commit_date
+    if long:
+        # Keep SemVer compatible.
+        rev = git_commit_rev(git_dir=git_dir)
+        version += "+git.%s" % rev
+        if git_is_dirty(git_dir=git_dir):
+            version += ".dirty"
+    return version
+
+
+def load_setup_info_generated(filename: str):
+    code = compile(open(filename).read(), filename, "exec")
+    info = {}
+    eval(code, info)
+    version = info["version"]
+    long_version = info["long_version"]
+    return version, long_version
 
 
 def main():
-    if os.path.exists("PKG-INFO"):
-        print("Found existing PKG-INFO.")
-        info = parse_pkg_info("PKG-INFO")
-        version = info["Version"]
-        print("Version via PKG-INFO:", version)
+    if os.path.exists("_setup_info_generated.py"):
+        version, long_version = load_setup_info_generated("_setup_info_generated.py")
+        print("Version via _setup_info_generated:", version, long_version)
+    elif os.path.exists("tui_editor/_setup_info_generated.py"):
+        version, long_version = load_setup_info_generated("tui_editor/_setup_info_generated.py")
+        print("Version via tui_editor/_setup_info_generated:", version, long_version)
     else:
         try:
             version = git_head_version()
-            print("Version via Git:", version)
+            long_version = git_head_version(long=True)
+            print("Version via Git:", version, long_version)
         except Exception as exc:
             print("Exception while getting Git version:", exc)
             sys.excepthook(*sys.exc_info())
             version = time.strftime("1.%Y%m%d.%H%M%S", time.gmtime())
-            print("Version via current time:", version)
-
+            long_version = version + "+unknown"
+            print("Version via current time:", version, long_version)
 
     if os.environ.get("DEBUG", "") == "1":
         debug_print_file(".")
         debug_print_file("PKG-INFO")
 
+    with open("_setup_info_generated.py", "w") as f:
+        f.write("version = %r\n" % version)
+        f.write("long_version = %r\n" % long_version)
+    shutil.copy("_setup_info_generated.py", "tui_editor/")
+    package_data = ["MANIFEST", "_setup_info_generated.py"]
 
     setup(
         name='tui-editor',
         version=version,
         packages=['tui_editor'],
-        package_dir={'tui_editor': 'tui_editor'},
+        include_package_data=True,
+        package_data={'tui_editor': package_data},  # filtered via MANIFEST.in
         description='Simple Python terminal (TUI) multi-line editor',
         author='Albert Zeyer',
         author_email='albzey@gmail.com',
