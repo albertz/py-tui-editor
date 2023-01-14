@@ -96,55 +96,59 @@ def git_head_version(git_dir="."):
     return "1.%s" % commit_date
 
 
-if os.path.exists("PKG-INFO"):
-    print("Found existing PKG-INFO.")
-    info = parse_pkg_info("PKG-INFO")
-    version = info["Version"]
-    print("Version via PKG-INFO:", version)
-else:
-    try:
-        version = git_head_version()
-        print("Version via Git:", version)
-    except Exception as exc:
-        print("Exception while getting Git version:", exc)
-        sys.excepthook(*sys.exc_info())
-        version = time.strftime("1.%Y%m%d.%H%M%S", time.gmtime())
-        print("Version via current time:", version)
+def main():
+    if os.path.exists("PKG-INFO"):
+        print("Found existing PKG-INFO.")
+        info = parse_pkg_info("PKG-INFO")
+        version = info["Version"]
+        print("Version via PKG-INFO:", version)
+    else:
+        try:
+            version = git_head_version()
+            print("Version via Git:", version)
+        except Exception as exc:
+            print("Exception while getting Git version:", exc)
+            sys.excepthook(*sys.exc_info())
+            version = time.strftime("1.%Y%m%d.%H%M%S", time.gmtime())
+            print("Version via current time:", version)
 
 
-if os.environ.get("DEBUG", "") == "1":
-    debug_print_file(".")
-    debug_print_file("PKG-INFO")
+    if os.environ.get("DEBUG", "") == "1":
+        debug_print_file(".")
+        debug_print_file("PKG-INFO")
 
 
-setup(
-    name='tui-editor',
-    version=version,
-    packages=['tui_editor'],
-    package_dir={'tui_editor': 'tui_editor'},
-    description='Simple Python terminal (TUI) multi-line editor',
-    author='Albert Zeyer',
-    author_email='albzey@gmail.com',
-    url='https://github.com/albertz/py-tui-editor',
-    license='MIT License',
-    long_description=open('README.rst').read(),
-    # https://pypi.python.org/pypi?%3Aaction=list_classifiers
-    classifiers=[
-        "Development Status :: 4 - Beta",
-        "Intended Audience :: Developers",
-        "Intended Audience :: Education",
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: MacOS :: MacOS X',
-        'Operating System :: POSIX',
-        'Operating System :: Unix',
-        'Programming Language :: Python',
-        'Topic :: Software Development :: Libraries',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-        'Topic :: Software Development :: User Interfaces',
-        'Topic :: System :: Shells',
-        'Topic :: Terminals',
-        'Topic :: Text Editors',
-    ]
-)
+    setup(
+        name='tui-editor',
+        version=version,
+        packages=['tui_editor'],
+        package_dir={'tui_editor': 'tui_editor'},
+        description='Simple Python terminal (TUI) multi-line editor',
+        author='Albert Zeyer',
+        author_email='albzey@gmail.com',
+        url='https://github.com/albertz/py-tui-editor',
+        license='MIT License',
+        long_description=open('README.rst').read(),
+        # https://pypi.python.org/pypi?%3Aaction=list_classifiers
+        classifiers=[
+            "Development Status :: 4 - Beta",
+            "Intended Audience :: Developers",
+            "Intended Audience :: Education",
+            'Intended Audience :: Science/Research',
+            'License :: OSI Approved :: MIT License',
+            'Operating System :: MacOS :: MacOS X',
+            'Operating System :: POSIX',
+            'Operating System :: Unix',
+            'Programming Language :: Python',
+            'Topic :: Software Development :: Libraries',
+            'Topic :: Software Development :: Libraries :: Python Modules',
+            'Topic :: Software Development :: User Interfaces',
+            'Topic :: System :: Shells',
+            'Topic :: Terminals',
+            'Topic :: Text Editors',
+        ]
+    )
 
+
+if __name__ == "__main__":
+    main()
