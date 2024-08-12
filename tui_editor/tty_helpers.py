@@ -177,6 +177,6 @@ KEYMAP = {
     b"\x7f": KEY_BACKSPACE,
     b"\x1b[3~": KEY_DELETE,
     # xterm specific keymap entries
-    b'\x1b[F': KEY_END,
-    b'\x1b[H': KEY_HOME,
+    b"\x1b[F": KEY_END,
+    b"\x1b[H": KEY_HOME,
 }
